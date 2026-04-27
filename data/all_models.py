@@ -22,7 +22,6 @@ class User(SqlAlchemyBase, UserMixin):
 class Location(SqlAlchemyBase):
     __tablename__ = 'locations'
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
-    name = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     answer = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     fake_answers = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     question = sqlalchemy.Column(sqlalchemy.String, nullable=True)

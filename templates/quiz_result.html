@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8 text-center">
+        <div class="card">
+            <h2 class="fw-bold mb-4">Тест завершен!</h2>
+            
+            <h4 class="mb-4">Вы набрали: <span class="text-success">{{ score }}</span> очков</h4>
+
+            {% if current_user.is_authenticated %}
+                <p class="text-muted">Эти очки уже добавлены к вашему общему рейтингу в таблице лидеров.</p>
+            {% else %}
+                <p class="text-warning">
+                    Вы играли как гость. Зарегистрируйтесь или войдите, чтобы сохранять свои результаты и участвовать в рейтинге!
+                </p>
+            {% endif %}
+
+            <div class="mt-4 d-grid gap-3 d-sm-flex justify-content-sm-center">
+                <a href="{{ url_for('quiz') }}" class="btn btn-primary btn-lg rounded-pill px-4">Пройти еще раз</a>
+                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-lg rounded-pill px-4">На главную</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

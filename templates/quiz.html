@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div>
+            <span class="bg-secondary">
+                Вопрос {{ q_num }} из {{ total }}
+            </span>
+            <span class="bg-success">
+                Счет: {{ score }}
+            </span>
+        </div>
+
+        <div class="card">
+            {% if location.image_path %}
+                <img src="{{ url_for('static', filename='images/' + location.image_path) }}" 
+                     class="card-img-top" 
+                     alt="Изображение места" 
+                     style="max-height: 400px; object-fit: cover;">
+            {% else %}
+                <div style="height: 250px;">
+                    <span class="text-muted">Изображение отсутствует</span>
+                </div>
+            {% endif %}
+            <div class="card-body p-4 text-center">
+                <h4 class="card-title fw-bold mb-4">
+                    {{ location.question if location.question else 'Что это за место?' }}
+                </h4>
+                <form method="POST">
+                    <div class="d-grid gap-3">
+                        {% for choice in choices %}
+                            <button type="submit" name="answer" value="{{ choice }}" 
+                                    class="btn btn-outline-primary btn-lg rounded-pill text-wrap">
+                                {{ choice }}
+                            </button>
+                        {% endfor %}
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

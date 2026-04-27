@@ -1,4 +1,5 @@
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, redirect, url_for, session, request
+import random
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from data import db_session
 from data.all_models import User, Location
@@ -15,6 +16,7 @@ def index():
     db_sess = db_session.create_session()
     leaders = db_sess.query(User).order_by(User.score.desc()).limit(10).all()
     return render_template("index.html", leaders=leaders)
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -63,6 +65,73 @@ def reqister():
         db_sess.close()
         return redirect('/login')
     return render_template('register.html', title='Регистрация', form=form)
+
+
+@app.route('/quiz', methods=['GET', 'POST'])
+def quiz():
+    db_sess = db_session.create_session()
+    if 'quiz_locations' not in session:
+        all_locs = db_sess.query(Location).all()
+        # Если в базе меньше 10 вопросов, то берем все что есть
+        sample_size = min(len(all_locs), 10)
+        if sample_size == 0:
+            db_sess.close()
+            return redirect(url_for('index'))
+        selected = random.sample(all_locs, sample_size)
+        session['quiz_locations'] = [loc.id for loc in selected]
+        session['quiz_score'] = 0
+        session['quiz_index'] = 0
+        session['total_questions'] = sample_size
+
+    if session['quiz_index'] >= session['total_questions']:
+        return redirect(url_for('quiz_result'))
+
+    current_loc_id = session['quiz_locations'][session['quiz_index']]
+    current_loc = db_sess.query(Location).get(current_loc_id)
+    if request.method == 'POST':
+        selected_answer = request.form.get('answer')
+        if selected_answer == current_loc.answer:
+            session['quiz_score'] += 10
+        session['quiz_index'] += 1
+        # Если это был последний вопрос
+        if session['quiz_index'] >= session['total_questions']:
+            if current_user.is_authenticated:
+                user = db_sess.query(User).get(current_user.id)
+                user.score = max(user.score, session['quiz_score'])
+                db_sess.commit()
+            db_sess.close()
+            return redirect(url_for('quiz_result'))
+
+        db_sess.close()
+        return redirect(url_for('quiz'))
+    choices = [c.strip() for c in current_loc.fake_answers.split('|') if c.strip()]
+    choices.append(current_loc.answer)
+    random.shuffle(choices)
+
+    db_sess.close()
+    return render_template('quiz.html',
+                           location=current_loc,
+                           choices=choices,
+                           q_num=session['quiz_index'] + 1,
+                           total=session['total_questions'],
+                           score=session['quiz_score'])
+
+
+@app.route('/quiz_result')
+def quiz_result():
+    if 'quiz_score' not in session:
+        return redirect(url_for('index'))
+
+    score = session['quiz_score']
+
+    # Очищаем данные
+    session.pop('quiz_locations', None)
+    session.pop('quiz_score', None)
+    session.pop('quiz_index', None)
+    session.pop('total_questions', None)
+
+    return render_template('quiz_result.html', score=score)
+
 
 def main():
     db_session.global_init("db/tula_quiz.sqlite")
