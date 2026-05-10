@@ -11,11 +11,11 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 
-@app.route("/")
+@app.route("/") # / - путь к странице (например: https://наш_сервер/)
 def index():
     db_sess = db_session.create_session()
-    leaders = db_sess.query(User).order_by(User.score.desc()).limit(10).all()
-    return render_template("index.html", leaders=leaders)
+    leaders = db_sess.query(User).order_by(User.score.desc()).limit(10).all() # выбираем 10 лучших из БД
+    return render_template("index.html", leaders=leaders) # отображаем страницу
 
 
 @login_manager.user_loader
@@ -25,46 +25,52 @@ def load_user(user_id):
 
 
 @app.route('/login', methods=['GET', 'POST'])
+# /login - путь к странице (например: https://наш_сервер/register)
+# methods=['GET', 'POST'] - может ПОЛУЧАТЬ и ОТПРАВЛЯТЬ данные со страницы
 def login():
-    form = LoginForm()
-    if form.validate_on_submit():
+    form = LoginForm()  # используем созданную нами заранее форму
+    if form.validate_on_submit(): # если ввели данные верно
         db_sess = db_session.create_session()
-        user = db_sess.query(User).filter(User.email == form.email.data).first()
-        if user and user.check_password(form.password.data):
-            login_user(user, remember=form.remember_me.data)
-            return redirect("/")
+        user = db_sess.query(User).filter(User.email == form.email.data).first() # выбираем пользователя с такими е данными
+        if user and user.check_password(form.password.data): # проверяем пароль
+            login_user(user, remember=form.remember_me.data) # логинимся
+            return redirect("/") # на начальную страницу
         db_sess.close()
         return render_template('login.html', message="Неправильный логин или пароль", form=form)
-    return render_template('login.html', title='Авторизация', form=form)
+    return render_template('login.html', title='Авторизация', form=form) # ввели данные неправильно - остаемся там же
 
 
 @app.route('/logout')
-@login_required
-def logout():
+@login_required # если уже зареганы
+def logout(): # разлогинится
     logout_user()
-    return redirect("/")
+    return redirect("/") # на начальную
 
 
 @app.route('/register', methods=['GET', 'POST'])
+# /register - путь к странице (например: https://наш_сервер/register)
+# methods=['GET', 'POST'] - может ПОЛУЧАТЬ и ОТПРАВЛЯТЬ данные со страницы
 def reqister():
-    form = RegisterForm()
-    if form.validate_on_submit():
-        if form.password.data != form.password_again.data:
+    form = RegisterForm() # заранее созданная формочка
+    if form.validate_on_submit(): # ввели верно
+        if form.password.data != form.password_again.data: # проверили пароль
             return render_template('register.html', title='Регистрация', form=form, message="Пароли не совпадают")
         db_sess = db_session.create_session()
         if db_sess.query(User).filter(User.email == form.email.data).first():
             return render_template('register.html', title='Регистрация', form=form,
                                    message="Такой пользователь уже есть")
-        user = User(
+        user = User( # создаем пользователя
             username=form.username.data,
             email=form.email.data,
         )
-        user.set_password(form.password.data)
-        db_sess.add(user)
+
+        user.set_password(form.password.data) # шифруем пароль
+        db_sess.add(user) # добавили в БД
         db_sess.commit()
         db_sess.close()
-        return redirect('/login')
-    return render_template('register.html', title='Регистрация', form=form)
+        login_user(user, remember=form.remember_me.data)  # логинимся
+        return redirect("/")  # на начальную страницу
+    return render_template('register.html', title='Регистрация', form=form) # ввели не то
 
 
 @app.route('/quiz', methods=['GET', 'POST'])
@@ -119,10 +125,9 @@ def quiz():
 
 @app.route('/quiz_result')
 def quiz_result():
-    if 'quiz_score' not in session:
+    if 'quiz_score' not in session: # играли ли мы в викторину? если нет, то и очков нет - на главную
         return redirect(url_for('index'))
-
-    score = session['quiz_score']
+    score = session['quiz_score'] # получаем набранное нами количество очков
 
     # Очищаем данные
     session.pop('quiz_locations', None)
@@ -130,7 +135,7 @@ def quiz_result():
     session.pop('quiz_index', None)
     session.pop('total_questions', None)
 
-    return render_template('quiz_result.html', score=score)
+    return render_template('quiz_result.html', score=score) # выводим результат
 
 
 def main():

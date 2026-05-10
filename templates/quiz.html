@@ -16,8 +16,8 @@
             {% if location.image_path %}
                 <img src="{{ url_for('static', filename='images/' + location.image_path) }}" 
                      class="card-img-top" 
-                     alt="Изображение места" 
-                     style="max-height: 400px; object-fit: cover;">
+                     alt="Изображение места"
+                     style="max-height: 500px;">
             {% else %}
                 <div style="height: 250px;">
                     <span class="text-muted">Изображение отсутствует</span>
